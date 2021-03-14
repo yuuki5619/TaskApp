@@ -2,6 +2,8 @@ package jp.techacademy.satou.taskapp
 
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.app.SearchManager
+import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.realm.Realm
@@ -9,6 +11,12 @@ import kotlinx.android.synthetic.main.activity_main.*
 import io.realm.RealmChangeListener
 import io.realm.Sort
 import android.content.Intent
+import android.os.Build
+import android.util.AttributeSet
+import android.util.Log
+import android.view.*
+import androidx.appcompat.widget.SearchView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 
 const val EXTRA_TASK = "jp.techacademy.satou.taskapp.TASK"
@@ -26,6 +34,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+
 
         fab.setOnClickListener { view ->
             val intent = Intent(this, InputActivity::class.java)
@@ -89,7 +99,42 @@ class MainActivity : AppCompatActivity() {
         }
 
         reloadListView()
+
+
     }
+
+
+
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.serch, menu)
+        var searchMenu = menu?.findItem(R.id.menu_search)?.apply {
+            var searchView = actionView as SearchView
+            searchView.setIconifiedByDefault(false) // アイコンを常時表示させる
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    searchView.clearFocus()
+                    if (query!!.isNotEmpty()){
+                        val queryresults=mRealm.where(Task::class.java).equalTo("category", query).findAll()
+                        mTaskAdapter.mTaskList=mRealm.copyFromRealm(queryresults)
+                        listView1.adapter = mTaskAdapter
+                        mTaskAdapter.notifyDataSetChanged()
+                    }
+
+                    return true
+               }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+
+                    return true
+                }
+            })
+
+        }
+        return true
+    }
+
+
 
     private fun reloadListView() {
         // Realmデータベースから、「すべてのデータを取得して新しい日時順に並べた結果」を取得
@@ -111,3 +156,4 @@ class MainActivity : AppCompatActivity() {
         mRealm.close()
     }
 }
+
